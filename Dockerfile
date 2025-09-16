@@ -3,22 +3,28 @@ FROM node:18-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-RUN npm install -g pnpm@latest
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml* source.config.ts ./
-RUN pnpm install --frozen-lockfile
+# Copy package files
+COPY package.json package-lock.json source.config.ts ./
+
+# Install dependencies using npm
+RUN npm ci --only=production --no-audit --no-fund
 
 # Rebuild the source code only when needed
 FROM deps AS builder
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Copy all files
 COPY . .
-RUN pnpm build
+
+# Install all dependencies (including devDependencies) for build
+RUN npm ci --no-audit --no-fund
+
+# Build the application
+RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
