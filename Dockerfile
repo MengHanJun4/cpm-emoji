@@ -4,6 +4,9 @@ FROM node:20-alpine AS base
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 
+# Set npm registry to npmmirror for faster downloads
+RUN npm config set registry https://registry.npmmirror.com/
+
 WORKDIR /app
 
 # Copy package files
